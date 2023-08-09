@@ -21,12 +21,11 @@ from msrestazure.azure_active_directory import AADTokenCredentials
 from azure.devops.connection import Connection
 from azure.devops.exceptions import AzureDevOpsServiceError
 import os
-
-
-
-
-api = config.OPENAI_API_KEY 
-
+from azure.devops.connection import Connection
+from msrest.authentication import BasicAuthentication
+import json
+import config
+import git
 
 
 def copy_file_to_txt(input_file, output_file):
@@ -45,6 +44,34 @@ def obtener_contenido_archivo(nombre_archivo):
 
 
 
+
+
+
+
+api = config.OPENAI_API_KEY 
+project_name= config.project_name
+pipeline_id = config.pipeline_id
+# Fill in with your personal access token and org URL
+personal_access_token = config.PAT
+organization_url = config.organization_url
+
+logBuild= config.logBuild
+logTest= config.logTest
+
+
+ # Create a connection to the org
+credentials = BasicAuthentication('', personal_access_token)
+connection = Connection(base_url=organization_url, creds=credentials)
+
+
+
+
+
+
+
+
+
+'''
 #TENGO EL REPO
 loader = GitLoader(
     clone_url="https://dev.azure.com/Tailspin0523388/_git/terraform",
@@ -54,6 +81,29 @@ loader = GitLoader(
 )
 
 data = loader.load()
+
+'''
+
+
+## CLONAMOS EL REPO
+
+repository_url = 'https://Tailspin0523388@dev.azure.com/Tailspin0523388/terraform/_git/terraform'
+
+# Ruta local donde se clonará el repositorio
+local_repo_path = 'REPOSITORIO'
+
+# Verifica si el repositorio ya está clonado
+if os.path.exists(local_repo_path):
+    repo = git.Repo(local_repo_path)
+    print("Repositorio existente encontrado.")
+else:
+    # Clona el repositorio utilizando el token de acceso personal
+    repo = git.Repo.clone_from(repository_url, local_repo_path, branch="terraform", env={
+        "GIT_ASKPASS": "echo",
+        "VSS_NUGET_EXTERNAL_FEED_ENDPOINTS": '{"endpointCredentials":[{"endpoint":"https://pkgs.dev.azure.com/Tailspin0523388/_packaging/tu-feed/nuget/v3/index.json","username":"laura.plaza@babelgroup.com","password":"'+personal_access_token+'"}]}'})
+    print("Repositorio clonado.")
+
+
 
 
 
@@ -104,6 +154,64 @@ tarea= "Añademe varios comentario indicandome que crees que significa cada vari
 #while contador <=3 and correcto == False :
 respuesta= chat_llm_chain.run(human_input=tarea + "Este es el código:" + "\n---\n" + codigo + "\n---\n")
 print(respuesta)
+
+#Iteramos mientras la respuesta no sea válida o mientras el contador sea menor que 3 para que no itere en un bucle infinito
+while correcto == False or contador < 3 :
+    # pasar respuesta a input file 
+    with open (input_file,"w") as archivo :
+        archivo.write(respuesta)
+
+
+    # se sube al repositorio los cambios y se hace un commit y push   
+    repo.git.add('.')
+    commit_message = "Cambios automáticos"
+    commit = repo.index.commit(commit_message)
+    #guardamos el hash
+    hash_full = commit.hexsha 
+    repo.git.push('origin', "terraform")
+    print("Hash completo del commit: " + hash_full)
+
+
+    #esperamos a que se ejecute el pipeline al completo 6 minutos
+    time.sleep(config.tiempoEspera)
+
+
+
+    # Get a client (the "core" client provides access to projects, teams, etc)
+    core_client = connection.clients.get_core_client()
+
+
+    # Get a list of builds (executions) for the pipeline
+    builds = pipelines_client.get_builds(project=project_name, definitions=[pipeline_id])
+
+
+#  iteramos por los builds hasta que encontremos el nuestro (coinciden los hash de los commit)
+# si si el estado es suceeded, ha sido exitosos y salimos del bucle y fin del flujo
+# en otro caso, 
+    #si  hay un error en el build se le pasa a chatgpt con su respectivo mensaje y volvemos a iterar
+    # si hay un  error en el test se le pasa a chatgpt con su respectivo mensaje y volvemos a iterar
+    encontrado = False
+    i = 0 
+    while encontrado == False : 
+        build = builds[i]
+        if build.source_version ==  hash_full :
+            if build.result == "succeeded" :
+                correcto = True
+                print("CODIGO MODIFICADO CON ÉXITO")
+            else : 
+                urlLogBuild = getattr(pipelines_client.get_build_logs(build_id=build.id, project=project_name)[logBuild-1],"url")
+                urlLogTest = getattr(pipelines_client.get_build_logs(build_id=build.id, project="terraform")[logTest-1],"url")
+                tarea = "El código que nos has dado tiene un error en uno de los siguientes codigos  : . Corrígelo : " +  urlLogBuild + " " + urlLogTest
+                respuesta= chat_llm_chain.run(human_input=tarea  + "\n---\n")
+                print(respuesta)
+            encontrado = True
+        i = i +1
+
+    contador = contador + 1
+
+
+
+
     ## hacer un commit del pipeline
     ## por tanto se lanza el pipeline
     ##  tener log del pipeline
@@ -116,4 +224,20 @@ print(respuesta)
             # tarea= "El código que me has dado : " + respuesta + " no ha pasado las pruebas"
 
         #contador = contador +1
+
+
+
+
+
+'''
+# Create a connection to the org
+credentials = BasicAuthentication('', personal_access_token)
+connection = Connection(base_url=organization_url, creds=credentials)
+# Get a client (the "core" client provides access to projects, teams, etc)
+core_client = connection.clients.get_core_client()
+
+
+# Get a list of builds (executions) for the pipeline
+builds = pipelines_client.get_builds(project=project_name, definitions=[pipeline_id])
+'''
 

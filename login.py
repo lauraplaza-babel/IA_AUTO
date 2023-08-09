@@ -50,12 +50,52 @@ for build in builds:
     print("Started On:", build.start_time)
     print("Finished On:", build.finish_time)
     print("Source Branch:", build.source_branch)
+    print("Source Version:" , build.source_version)
     # ... You can access other properties of the build as needed
     print("---")
+
+
+    if  build.source_version ==  and   build.result == "failed" 
+
+
+encontrado = False
+i = 0 
+while encontrado == False : 
+    build = builds[i]
+    if build.source_version ==  hash_full
+        if build.result == "succeeded"
+            correcto = True
+            print("CODIGO MODIFICADO CON ÉXITO")
+        else : 
+            
+
+
+        encontrado = True
+    i = i +1
+
+
+
+
+
+
+
+
+
+
+
 
     # Get the logs for the build with ID 377
 print(pipelines_client.get_build_logs(build_id=377, project="terraform"))
 
+
+
+
+
+
+
+
+logBuild= config.logBuild
+logTest= config.logTest
 
 
 for o in pipelines_client.get_build_logs(build_id=377, project="terraform") : 
@@ -63,6 +103,9 @@ for o in pipelines_client.get_build_logs(build_id=377, project="terraform") :
     print("Log  : ")
     print(getattr(o,"url"))
 
+
+print(getattr(pipelines_client.get_build_logs(build_id=377, project="terraform")[logBuild-1],"url"))
+print(getattr(pipelines_client.get_build_logs(build_id=377, project="terraform")[logTest-1],"url"))
 
 #https://dev.azure.com/Tailspin0523388/terraform/_apis/build/builds/377/logs?api-version=7.0
 

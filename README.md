@@ -8,7 +8,15 @@ entorno\Scripts\activate.bat
 pip install -r requirements.txt
 
 
-4) En el archivo config.py añade el valor al OPENAI_API_KEY  y PAT
+4) En el archivo config.py añade 
+OPENAI_API_KEY=
+PAT=
+project_name=
+pipeline_id = 
+organization_url = 
+tiempoEspera = 
+logBuild= 
+logTest= 
 
 
 

@@ -1,1 +1,2 @@
 OPENAI_API_KEY="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"
+PAT="44hhavntbi5p5fxrb75e6dron3yjdebfl7jlcv5s47acvwuv6ynq"

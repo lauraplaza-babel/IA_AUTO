@@ -1,9 +1,10 @@
 from azure.devops.connection import Connection
 from msrest.authentication import BasicAuthentication
 import json
+import config
 
 # Fill in with your personal access token and org URL
-personal_access_token = 'evzh4lc3o5x3cjx7gbsyvk2uezkx5op7d6inkhx545z6zfq2h4iq'
+personal_access_token = config.PAT
 organization_url = 'https://dev.azure.com/Tailspin0523388'
 
 # Create a connection to the org
@@ -54,7 +55,6 @@ for build in builds:
 
     # Get the logs for the build with ID 377
 print(pipelines_client.get_build_logs(build_id=377, project="terraform"))
-
 
 
 

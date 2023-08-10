@@ -177,10 +177,8 @@ while correcto == False or contador < 3 :
 
 
 
-    # Get a client (the "core" client provides access to projects, teams, etc)
+    #OBTENEMOS LOS BUILDS
     core_client = connection.clients.get_core_client()
-
-
     # Get a list of builds (executions) for the pipeline
     builds = pipelines_client.get_builds(project=project_name, definitions=[pipeline_id])
 

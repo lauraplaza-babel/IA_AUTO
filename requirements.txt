@@ -1,3 +1,4 @@
 azure-devops
-langchafin
+langchain
 GitPython
+msrestazure
